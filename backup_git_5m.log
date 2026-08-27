@@ -635,3 +635,24 @@ Already up to date.
 [0;34m[INFO][0m Verificando arquivos grandes (≥100MB)...
 [0;32m✅ Nenhum arquivo grande encontrado[0m
 [0;34m[INFO][0m Git add .
+[0;34m[INFO][0m Verificando limites adicionais...
+(standard_in) 1: syntax error
+(standard_in) 1: syntax error
+[0;34m[INFO][0m Git commit
+[main eb18b75] backup automatico - 2026-08-27 17:35:41
+ 1 file changed, 22 insertions(+)
+[0;34m[INFO][0m Git push
+fatal: não foi possível acessar 'https://github.com/andresilvacosta1992/minificar-html.git/': Could not resolve host: github.com
+[0;31m[ERRO][0m Falha no push
+[2026-08-27 17:35:41] Erro no backup
+Aguardando 5 minutos...
+
+[2026-08-27 17:40:41] Executando backup...
+[0;32m[INFO][0m Backup do repositório: minificar-html
+[0;34m[INFO][0m Detectando branch principal
+[0;34m[INFO][0m Branch atual: main
+[0;34m[INFO][0m Git pull
+Already up to date.
+[0;34m[INFO][0m Verificando arquivos grandes (≥100MB)...
+[0;32m✅ Nenhum arquivo grande encontrado[0m
+[0;34m[INFO][0m Git add .
