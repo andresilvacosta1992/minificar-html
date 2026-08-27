@@ -1,0 +1,9 @@
+[2026-08-27 15:06:16] Executando backup...
+[0;32m[INFO][0m Backup do repositório: minificar-html
+[0;34m[INFO][0m Detectando branch principal
+[0;34m[INFO][0m Branch atual: main
+[0;34m[INFO][0m Git pull
+Already up to date.
+[0;34m[INFO][0m Verificando arquivos grandes (≥100MB)...
+[0;32m✅ Nenhum arquivo grande encontrado[0m
+[0;34m[INFO][0m Git add .
