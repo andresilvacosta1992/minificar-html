@@ -61,7 +61,7 @@ def test_recursivo_ignora_outros_arquivos(tmp_path: Path) -> None:
 
 def test_simulacao_e_bom(tmp_path: Path) -> None:
     arquivo = tmp_path / "index.html"
-    original = b"\xef\xbb\xbf<!-- x --><p> texto </p>"
+    original = b"\xef\xbb\xbf<!-- x -->\n    <p> texto </p>"
     arquivo.write_bytes(original)
     resultado = minificar_arquivo(arquivo, simular=True)
     assert resultado.alterado and arquivo.read_bytes() == original
