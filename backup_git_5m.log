@@ -54,3 +54,25 @@ Already up to date.
 [0;34m[INFO][0m Verificando arquivos grandes (≥100MB)...
 [0;32m✅ Nenhum arquivo grande encontrado[0m
 [0;34m[INFO][0m Git add .
+[0;34m[INFO][0m Verificando limites adicionais...
+(standard_in) 1: syntax error
+(standard_in) 1: syntax error
+[0;34m[INFO][0m Git commit
+[main 278e31f] backup automatico - 2026-08-27 15:16:23
+ 1 file changed, 23 insertions(+)
+[0;34m[INFO][0m Git push
+To https://github.com/andresilvacosta1992/minificar-html.git
+   7750e58..278e31f  main -> main
+[0;32m[SUCCESS][0m Backup concluído!
+[2026-08-27 15:16:26] Backup concluído com sucesso
+Aguardando 5 minutos...
+
+[2026-08-27 15:21:26] Executando backup...
+[0;32m[INFO][0m Backup do repositório: minificar-html
+[0;34m[INFO][0m Detectando branch principal
+[0;34m[INFO][0m Branch atual: main
+[0;34m[INFO][0m Git pull
+Already up to date.
+[0;34m[INFO][0m Verificando arquivos grandes (≥100MB)...
+[0;32m✅ Nenhum arquivo grande encontrado[0m
+[0;34m[INFO][0m Git add .
