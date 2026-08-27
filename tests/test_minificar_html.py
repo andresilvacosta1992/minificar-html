@@ -1,7 +1,7 @@
 from pathlib import Path
 
 from minificar_html.cli import main
-from minificar_html.core import minificar_arquivo, minificar_pasta
+from minificar_html.core import minificar_arquivo, minificar_conteudo, minificar_pasta
 
 
 def test_minifica_html_e_embutidos(tmp_path: Path) -> None:
@@ -12,7 +12,40 @@ def test_minifica_html_e_embutidos(tmp_path: Path) -> None:
     resultado = minificar_arquivo(arquivo)
     conteudo = arquivo.read_text(encoding="utf-8")
     assert resultado.alterado and resultado.economia > 0
-    assert "<!-- remover -->" not in conteudo
+    assert "<!-- remover -->" in conteudo
+    assert "body{color:red}" in conteudo
+    assert "const soma=1+2;" in conteudo
+
+
+def test_preserva_texto_comentarios_tags_e_atributos() -> None:
+    original = '''<!-- manter -->\n<DIV data-texto="> <">\n<span>Olá mundo</span>\n</DIV>'''
+    reduzido = minificar_conteudo(original)
+    assert "<!-- manter -->" in reduzido
+    assert '<DIV data-texto="> <">' in reduzido
+    assert "<span>Olá mundo</span>" in reduzido
+    assert "\n" not in reduzido
+
+
+def test_preserva_blocos_sensiveis_e_scripts_nao_javascript() -> None:
+    original = '''<pre>  linha 1\n  linha 2</pre>
+    <textarea>  texto\n  intacto</textarea>
+    <script type="application/json"> { "nome": "A B" } </script>
+    <script type="importmap"> { "imports": {} } </script>'''
+    reduzido = minificar_conteudo(original)
+    assert "  linha 1\n  linha 2" in reduzido
+    assert "  texto\n  intacto" in reduzido
+    assert '{ "nome": "A B" }' in reduzido
+    assert '{ "imports": {} }' in reduzido
+
+
+def test_minifica_css_e_javascript_com_motores_separados() -> None:
+    original = '''<style> /* x */ body { color: red; margin: 0 10px; } </style>
+    <script> // x\n const mensagem = "olá mundo"; </script>'''
+    reduzido = minificar_conteudo(original)
+    assert "body{color:red;margin:0 10px}" in reduzido
+    assert 'const mensagem="olá mundo";' in reduzido
+    assert "/* x */" not in reduzido
+    assert "// x" not in reduzido
 
 
 def test_recursivo_ignora_outros_arquivos(tmp_path: Path) -> None:

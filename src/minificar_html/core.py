@@ -3,11 +3,23 @@
 from __future__ import annotations
 
 import os
+import re
 import tempfile
 from dataclasses import dataclass
 from pathlib import Path
 
-import minify_html
+import rcssmin
+import rjsmin
+
+
+_NOME_TAG = re.compile(r"<\s*(/?)\s*([a-zA-Z][\w:-]*)")
+_TIPO_ATRIBUTO = re.compile(
+    r"\btype\s*=\s*(?:\"([^\"]*)\"|'([^']*)'|([^\s>]+))", re.IGNORECASE
+)
+_TIPOS_JAVASCRIPT = {
+    "application/ecmascript", "application/javascript", "module",
+    "text/ecmascript", "text/javascript",
+}
 
 
 @dataclass(frozen=True)
@@ -29,15 +41,101 @@ def minificar_arquivo(caminho: Path, *, minificar_css: bool = True,
     original_bytes = caminho.read_bytes()
     tem_bom = original_bytes.startswith(b"\xef\xbb\xbf")
     original = original_bytes.decode("utf-8-sig" if tem_bom else "utf-8")
-    reduzido = minify_html.minify(
-        original, minify_css=minificar_css, minify_js=minificar_js,
-        remove_bangs=True, remove_processing_instructions=True,
+    reduzido = minificar_conteudo(
+        original, minificar_css=minificar_css, minificar_js=minificar_js
     )
     reduzido_bytes = (b"\xef\xbb\xbf" if tem_bom else b"") + reduzido.encode("utf-8")
     alterado = reduzido_bytes != original_bytes
     if alterado and not simular:
         _substituir_atomicamente(caminho, reduzido_bytes)
     return Resultado(caminho, len(original_bytes), len(reduzido_bytes), alterado)
+
+
+def minificar_conteudo(html: str, *, minificar_css: bool = True,
+                       minificar_js: bool = True) -> str:
+    """Compacta o HTML sem reescrever tags e trata CSS/JS separadamente."""
+    partes: list[str] = []
+    posicao = 0
+    tamanho = len(html)
+    while posicao < tamanho:
+        inicio = html.find("<", posicao)
+        if inicio < 0:
+            partes.append(html[posicao:])
+            break
+        partes.append(html[posicao:inicio])
+        fim = _fim_da_tag(html, inicio)
+        if fim is None:
+            partes.append(html[inicio:])
+            break
+        tag = html[inicio:fim]
+        partes.append(tag)
+        identificacao = _NOME_TAG.match(tag)
+        posicao = fim
+        if not identificacao or identificacao.group(1):
+            continue
+        nome = identificacao.group(2).lower()
+        if nome not in {"script", "style", "pre", "textarea"} or tag.rstrip().endswith("/>"):
+            continue
+        fechamento = re.search(rf"</\s*{re.escape(nome)}\s*>", html[posicao:], re.IGNORECASE)
+        if not fechamento:
+            partes.append(html[posicao:])
+            break
+        inicio_fechamento = posicao + fechamento.start()
+        fim_fechamento = posicao + fechamento.end()
+        conteudo = html[posicao:inicio_fechamento]
+        if nome == "style" and minificar_css and _tipo_css(tag):
+            conteudo = rcssmin.cssmin(conteudo)
+        elif nome == "script" and minificar_js and _tipo_javascript(tag):
+            conteudo = rjsmin.jsmin(conteudo)
+        partes.extend((conteudo, html[inicio_fechamento:fim_fechamento]))
+        posicao = fim_fechamento
+
+    return _compactar_espaco_entre_tags(partes)
+
+
+def _fim_da_tag(html: str, inicio: int) -> int | None:
+    if html.startswith("<!--", inicio):
+        fim = html.find("-->", inicio + 4)
+        return None if fim < 0 else fim + 3
+    aspas: str | None = None
+    for indice in range(inicio + 1, len(html)):
+        caractere = html[indice]
+        if aspas:
+            if caractere == aspas:
+                aspas = None
+        elif caractere in {'"', "'"}:
+            aspas = caractere
+        elif caractere == ">":
+            return indice + 1
+    return None
+
+
+def _compactar_espaco_entre_tags(partes: list[str]) -> str:
+    resultado: list[str] = []
+    for indice, parte in enumerate(partes):
+        if (parte and parte.isspace() and indice > 0 and indice + 1 < len(partes)
+                and partes[indice - 1].endswith(">") and partes[indice + 1].startswith("<")):
+            resultado.append(" ")
+        else:
+            resultado.append(parte)
+    return "".join(resultado)
+
+
+def _tipo_da_tag(tag: str) -> str | None:
+    encontrado = _TIPO_ATRIBUTO.search(tag)
+    if not encontrado:
+        return None
+    return next(valor for valor in encontrado.groups() if valor is not None).strip().lower()
+
+
+def _tipo_javascript(tag: str) -> bool:
+    tipo = _tipo_da_tag(tag)
+    return tipo is None or tipo in _TIPOS_JAVASCRIPT
+
+
+def _tipo_css(tag: str) -> bool:
+    tipo = _tipo_da_tag(tag)
+    return tipo is None or tipo == "text/css"
 
 
 def minificar_pasta(pasta: Path, *, minificar_css: bool = True,

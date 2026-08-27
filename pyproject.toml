@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "minificar-html"
-version = "0.1.0"
+version = "0.2.0"
 description = "CLI em português para minificar arquivos HTML recursivamente"
 readme = "README.md"
 requires-python = ">=3.9"
@@ -19,7 +19,10 @@ classifiers = [
   "Programming Language :: Python :: 3 :: Only",
   "Topic :: Text Processing :: Markup :: HTML",
 ]
-dependencies = ["minify-html>=0.18,<0.19"]
+dependencies = [
+  "rcssmin>=1.2,<2",
+  "rjsmin>=1.2,<2",
+]
 
 [project.optional-dependencies]
 dev = ["build>=1.2", "pytest>=8", "twine>=6"]
