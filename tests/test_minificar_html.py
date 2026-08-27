@@ -17,13 +17,25 @@ def test_minifica_html_e_embutidos(tmp_path: Path) -> None:
     assert "const soma=1+2;" in conteudo
 
 
-def test_preserva_texto_comentarios_tags_e_atributos() -> None:
+def test_preserva_texto_comentarios_e_valores_de_atributos() -> None:
     original = '''<!-- manter -->\n<DIV data-texto="> <">\n<span>Olá mundo</span>\n</DIV>'''
     reduzido = minificar_conteudo(original)
     assert "<!-- manter -->" in reduzido
     assert '<DIV data-texto="> <">' in reduzido
     assert "<span>Olá mundo</span>" in reduzido
     assert "\n" not in reduzido
+
+
+def test_compacta_tag_multilinha_e_style_inline() -> None:
+    original = '''<img src="foto.png"
+        alt="Foto com espaços"
+        style=" color: red; margin: 0 10px; "
+        data-sinal="> <">'''
+    reduzido = minificar_conteudo(original)
+    assert "\n" not in reduzido
+    assert 'alt="Foto com espaços"' in reduzido
+    assert 'style="color:red;margin:0 10px"' in reduzido
+    assert 'data-sinal="> <"' in reduzido
 
 
 def test_preserva_blocos_sensiveis_e_scripts_nao_javascript() -> None:
@@ -36,6 +48,16 @@ def test_preserva_blocos_sensiveis_e_scripts_nao_javascript() -> None:
     assert "  texto\n  intacto" in reduzido
     assert '{ "nome": "A B" }' in reduzido
     assert '{ "imports": {} }' in reduzido
+
+
+def test_compacta_json_ld_valido() -> None:
+    original = '<script type="application/ld+json"> { "nome": "A B" } </script>'
+    assert minificar_conteudo(original) == '<script type="application/ld+json">{"nome":"A B"}</script>'
+
+
+def test_preserva_json_ld_invalido() -> None:
+    original = '<script type="application/ld+json">{{ json_dinamico }}</script>'
+    assert minificar_conteudo(original) == original
 
 
 def test_minifica_css_e_javascript_com_motores_separados() -> None:

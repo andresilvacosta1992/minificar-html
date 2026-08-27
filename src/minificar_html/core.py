@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import os
 import re
+import json
 import tempfile
 from dataclasses import dataclass
 from pathlib import Path
@@ -20,6 +21,7 @@ _TIPOS_JAVASCRIPT = {
     "application/ecmascript", "application/javascript", "module",
     "text/ecmascript", "text/javascript",
 }
+_STYLE_ATRIBUTO = re.compile(r"(\bstyle\s*=\s*)([\"'])(.*?)(\2)", re.IGNORECASE | re.DOTALL)
 
 
 @dataclass(frozen=True)
@@ -62,13 +64,13 @@ def minificar_conteudo(html: str, *, minificar_css: bool = True,
         if inicio < 0:
             partes.append(html[posicao:])
             break
-        partes.append(html[posicao:inicio])
+        partes.append(_compactar_texto(html[posicao:inicio]))
         fim = _fim_da_tag(html, inicio)
         if fim is None:
             partes.append(html[inicio:])
             break
         tag = html[inicio:fim]
-        partes.append(tag)
+        partes.append(_compactar_tag(tag, minificar_css=minificar_css))
         identificacao = _NOME_TAG.match(tag)
         posicao = fim
         if not identificacao or identificacao.group(1):
@@ -87,10 +89,14 @@ def minificar_conteudo(html: str, *, minificar_css: bool = True,
             conteudo = rcssmin.cssmin(conteudo)
         elif nome == "script" and minificar_js and _tipo_javascript(tag):
             conteudo = rjsmin.jsmin(conteudo)
-        partes.extend((conteudo, html[inicio_fechamento:fim_fechamento]))
+        elif nome == "script" and _tipo_da_tag(tag) == "application/ld+json":
+            conteudo = _compactar_json(conteudo)
+        partes.extend((conteudo, _compactar_tag(
+            html[inicio_fechamento:fim_fechamento], minificar_css=minificar_css
+        )))
         posicao = fim_fechamento
 
-    return _compactar_espaco_entre_tags(partes)
+    return "".join(partes)
 
 
 def _fim_da_tag(html: str, inicio: int) -> int | None:
@@ -110,15 +116,54 @@ def _fim_da_tag(html: str, inicio: int) -> int | None:
     return None
 
 
-def _compactar_espaco_entre_tags(partes: list[str]) -> str:
+def _compactar_texto(texto: str) -> str:
+    """Reproduz o comportamento normal do navegador ao colapsar whitespace."""
+    return re.sub(r"\s+", " ", texto)
+
+
+def _compactar_tag(tag: str, *, minificar_css: bool) -> str:
+    """Compacta whitespace fora de aspas sem reordenar ou remover atributos."""
+    if tag.startswith("<!--") or tag.startswith("<![") or tag.startswith("<?"):
+        return tag
     resultado: list[str] = []
-    for indice, parte in enumerate(partes):
-        if (parte and parte.isspace() and indice > 0 and indice + 1 < len(partes)
-                and partes[indice - 1].endswith(">") and partes[indice + 1].startswith("<")):
-            resultado.append(" ")
+    aspas: str | None = None
+    espaco_pendente = False
+    for caractere in tag:
+        if aspas:
+            resultado.append(caractere)
+            if caractere == aspas:
+                aspas = None
+        elif caractere in {'"', "'"}:
+            if espaco_pendente and resultado and resultado[-1] not in {"<", "=", " "}:
+                resultado.append(" ")
+            espaco_pendente = False
+            aspas = caractere
+            resultado.append(caractere)
+        elif caractere.isspace():
+            espaco_pendente = True
         else:
-            resultado.append(parte)
-    return "".join(resultado)
+            if (espaco_pendente and resultado and resultado[-1] not in {"<", "=", " "}
+                    and caractere not in {">", "=", "/"}):
+                resultado.append(" ")
+            espaco_pendente = False
+            resultado.append(caractere)
+    compactada = "".join(resultado)
+    if minificar_css:
+        compactada = _STYLE_ATRIBUTO.sub(_minificar_style_atributo, compactada)
+    return compactada
+
+
+def _minificar_style_atributo(encontrado: re.Match[str]) -> str:
+    prefixo, aspas, css, _ = encontrado.groups()
+    return f"{prefixo}{aspas}{rcssmin.cssmin(css).rstrip(';')}{aspas}"
+
+
+def _compactar_json(conteudo: str) -> str:
+    try:
+        dados = json.loads(conteudo)
+    except (json.JSONDecodeError, TypeError):
+        return conteudo
+    return json.dumps(dados, ensure_ascii=False, separators=(",", ":"))
 
 
 def _tipo_da_tag(tag: str) -> str | None:

@@ -1,6 +1,6 @@
 # minificar-html
 
-Minifica recursivamente todos os arquivos HTML de uma pasta diretamente no local original. Compacta espaços entre tags, preserva comentários e conteúdo sensível, e minifica CSS e JavaScript embutidos com ferramentas específicas para cada linguagem.
+Minifica recursivamente todos os arquivos HTML de uma pasta diretamente no local original. Compacta texto e atributos, preserva comentários e conteúdo sensível, e usa ferramentas específicas para CSS, JavaScript e JSON-LD.
 
 ## Instalação e uso
 
@@ -16,7 +16,7 @@ minificar-html --pasta ./meu-site --simular
 minificar-html --pasta ./meu-site --sem-css --sem-js
 ```
 
-`--simular` calcula a economia sem escrever. Blocos `<pre>` e `<textarea>`, scripts JSON/import maps, comentários, tags e atributos são preservados. Se um arquivo não estiver em UTF-8 ou não puder ser lido, os demais continuam sendo processados e o comando termina com código de erro.
+`--simular` calcula a economia sem escrever. Blocos `<pre>` e `<textarea>`, import maps e comentários são preservados. Atributos `style` e JSON-LD são minificados pelos processadores de suas respectivas linguagens. Se um arquivo não estiver em UTF-8 ou não puder ser lido, os demais continuam sendo processados e o comando termina com código de erro.
 
 ## Desenvolvimento e publicação
 
