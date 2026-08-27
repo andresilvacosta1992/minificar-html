@@ -99,3 +99,33 @@ Already up to date.
 [0;34m[INFO][0m Verificando arquivos grandes (≥100MB)...
 [0;32m✅ Nenhum arquivo grande encontrado[0m
 [0;34m[INFO][0m Git add .
+[0;34m[INFO][0m Verificando limites adicionais...
+(standard_in) 1: syntax error
+(standard_in) 1: syntax error
+[0;34m[INFO][0m Git commit
+[main 8ae9575] backup automatico - 2026-08-27 15:26:48
+ 9 files changed, 299 insertions(+)
+ create mode 100644 .gitignore
+ create mode 100644 LICENSE
+ create mode 100644 README.md
+ create mode 100644 pyproject.toml
+ create mode 100644 src/minificar_html/__init__.py
+ create mode 100644 src/minificar_html/cli.py
+ create mode 100644 src/minificar_html/core.py
+ create mode 100644 tests/test_minificar_html.py
+[0;34m[INFO][0m Git push
+To https://github.com/andresilvacosta1992/minificar-html.git
+   dddaf4e..8ae9575  main -> main
+[0;32m[SUCCESS][0m Backup concluído!
+[2026-08-27 15:26:51] Backup concluído com sucesso
+Aguardando 5 minutos...
+
+[2026-08-27 15:31:51] Executando backup...
+[0;32m[INFO][0m Backup do repositório: minificar-html
+[0;34m[INFO][0m Detectando branch principal
+[0;34m[INFO][0m Branch atual: main
+[0;34m[INFO][0m Git pull
+Already up to date.
+[0;34m[INFO][0m Verificando arquivos grandes (≥100MB)...
+[0;32m✅ Nenhum arquivo grande encontrado[0m
+[0;34m[INFO][0m Git add .
